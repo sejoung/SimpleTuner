@@ -1,0 +1,23 @@
+[
+  {
+    "id": "my-dataset-1024",
+    "type": "local",
+    "instance_data_dir": "data/instance_data",
+    "crop": false,
+    "crop_style": "random",
+    "minimum_image_size": 1024,
+    "resolution": 1024,
+    "resolution_type": "pixel_area",
+    "repeats": "4",
+    "metadata_backend": "discovery",
+    "caption_strategy": "filename",
+    "cache_dir_vae": "cache/vae-1024"
+  },
+  {
+    "id": "text-embed-cache",
+    "dataset_type": "text_embeds",
+    "default": true,
+    "type": "local",
+    "cache_dir": "cache/text"
+  }
+]
