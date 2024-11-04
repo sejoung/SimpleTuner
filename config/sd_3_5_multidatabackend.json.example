@@ -1,23 +1,30 @@
 [
   {
-    "id": "my-dataset-1024",
+    "id": "fantasy_art_neo",
     "type": "local",
-    "instance_data_dir": "data/instance_data",
     "crop": false,
-    "crop_style": "random",
-    "minimum_image_size": 1024,
-    "resolution": 1024,
-    "resolution_type": "pixel_area",
-    "repeats": "4",
-    "metadata_backend": "discovery",
-    "caption_strategy": "filename",
-    "cache_dir_vae": "cache/vae-1024"
+    "crop_aspect": "square",
+    "crop_style": "center",
+    "resolution": 1.0,
+    "minimum_image_size": 1.0,
+    "maximum_image_size": 1.0,
+    "target_downsample_size": 1.0,
+    "resolution_type": "area",
+    "cache_dir_vae": "cache/vae",
+    "instance_data_dir": "/weka2/home-yeo/datasets/SDXL/duplicate_shuffle_01",
+    "disabled": false,
+    "skip_file_discovery": "",
+    "caption_strategy": "textfile",
+    "metadata_backend": "json",
+    "repeats": 1
   },
   {
-    "id": "text-embed-cache",
+    "id": "text-embeds",
+    "type": "local",
     "dataset_type": "text_embeds",
     "default": true,
-    "type": "local",
-    "cache_dir": "cache/text"
+    "cache_dir": "cache/text",
+    "disabled": false,
+    "write_batch_size": 128
   }
 ]
