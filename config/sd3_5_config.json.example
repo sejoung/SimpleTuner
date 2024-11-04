@@ -47,5 +47,5 @@
   "--use_ema": false,
   "--ema_decay": 0.999,
   "--seed": 42,
-  "--mixed_precision": "bf16",
+  "--mixed_precision": "bf16"
 }
