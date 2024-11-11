@@ -2183,9 +2183,11 @@ class Trainer:
                         )
                     training_logger.debug(f"Working on batch size: {bsz}")
                     if self.config.flow_matching:
-                        if (
-                            not self.config.flux_fast_schedule
-                            and not self.config.flux_use_beta_schedule
+                        if not self.config.flux_fast_schedule and not any(
+                            [
+                                self.config.flux_use_beta_schedule,
+                                self.config.flux_use_uniform_schedule,
+                            ]
                         ):
                             # imported from cloneofsimo's minRF trainer: https://github.com/cloneofsimo/minRF
                             # also used by: https://github.com/XLabs-AI/x-flux/tree/main
@@ -2194,6 +2196,11 @@ class Trainer:
                                 self.config.flow_matching_sigmoid_scale
                                 * torch.randn((bsz,), device=self.accelerator.device)
                             )
+                            sigmas = apply_flux_schedule_shift(
+                                self.config, self.noise_scheduler, sigmas, noise
+                            )
+                        elif self.config.flux_use_uniform_schedule:
+                            sigmas = torch.rand((bsz,), device=self.accelerator.device)
                             sigmas = apply_flux_schedule_shift(
                                 self.config, self.noise_scheduler, sigmas, noise
                             )
@@ -2311,7 +2318,9 @@ class Trainer:
                         elif self.config.flow_matching_loss == "compatible":
                             target = noise - latents
                         elif self.config.flow_matching_loss == "sd35":
-                            sigma_reshaped = sigmas.view(-1, 1, 1, 1)  # Ensure sigma has the correct shape
+                            sigma_reshaped = sigmas.view(
+                                -1, 1, 1, 1
+                            )  # Ensure sigma has the correct shape
                             target = (noisy_latents - latents) / sigma_reshaped
 
                     elif self.noise_scheduler.config.prediction_type == "epsilon":
