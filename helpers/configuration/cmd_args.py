@@ -593,6 +593,15 @@ def get_argument_parser():
         ),
     )
     parser.add_argument(
+        "--vae_enable_tiling",
+        action="store_true",
+        default=False,
+        help=(
+            "If set, will enable tiling for VAE caching. This is useful for very large images when VRAM is limited."
+            " This may be required for 2048px VAE caching on 24G accelerators, in addition to reducing --vae_batch_size."
+        ),
+    )
+    parser.add_argument(
         "--vae_cache_scan_behaviour",
         type=str,
         choices=["recreate", "sync"],
@@ -1102,7 +1111,7 @@ def get_argument_parser():
     parser.add_argument(
         "--use_ema",
         action="store_true",
-        help="Whether to use EMA (exponential moving average) model.",
+        help="Whether to use EMA (exponential moving average) model. Works with LoRA, Lycoris, and full training.",
     )
     parser.add_argument(
         "--ema_device",
@@ -1112,6 +1121,17 @@ def get_argument_parser():
             "The device to use for the EMA model. If set to 'accelerator', the EMA model will be placed on the accelerator."
             " This provides the fastest EMA update times, but is not ultimately necessary for EMA to function."
         ),
+    )
+    parser.add_argument(
+        "--ema_validation",
+        choices=["none", "ema_only", "comparison"],
+        default="comparison",
+        help=(
+            "When 'none' is set, no EMA validation will be done."
+            " When using 'ema_only', the validations will rely mostly on the EMA weights."
+            " When using 'comparison' (default) mode, the validations will first run on the checkpoint before also running for"
+            " the EMA weights. In comparison mode, the resulting images will be provided side-by-side."
+        )
     )
     parser.add_argument(
         "--ema_cpu_only",
@@ -1322,6 +1342,26 @@ def get_argument_parser():
         ),
     )
     parser.add_argument(
+        "--evaluation_type",
+        type=str,
+        default=None,
+        choices=["clip", "none"],
+        help=(
+            "Validations must be enabled for model evaluation to function. The default is to use no evaluator,"
+            " and 'clip' will use a CLIP model to evaluate the resulting model's performance during validations."
+        ),
+    )
+    parser.add_argument(
+        "--pretrained_evaluation_model_name_or_path",
+        type=str,
+        default="openai/clip-vit-large-patch14-336",
+        help=(
+            "Optionally provide a custom model to use for ViT evaluations."
+            " The default is currently clip-vit-large-patch14-336, allowing for lower patch sizes (greater accuracy)"
+            " and an input resolution of 336x336."
+        ),
+    )
+    parser.add_argument(
         "--validation_on_startup",
         action="store_true",
         default=False,
@@ -1338,6 +1378,15 @@ def get_argument_parser():
             "Some systems may benefit from using CPU-based seeds for reproducibility. On other systems, this may cause a TypeError."
             " Setting this option to 'cpu' may cause validation errors. If so, please set SIMPLETUNER_LOG_LEVEL=DEBUG"
             " and submit debug.log to a new Github issue report."
+        ),
+    )
+    parser.add_argument(
+        "--validation_lycoris_strength",
+        type=float,
+        default=1.0,
+        help=(
+            "When inferencing for validations, the Lycoris model will by default be run at its training strength, 1.0."
+            " However, this value can be increased to a value of around 1.3 or 1.5 to get a stronger effect from the model."
         ),
     )
     parser.add_argument(
@@ -2313,13 +2362,9 @@ def parse_cmdline_args(input_args=None):
             )
             args.gradient_precision = "fp32"
 
-    if args.use_ema:
-        if args.model_family == "sd3":
-            raise ValueError(
-                "Using EMA is not currently supported for Stable Diffusion 3 training."
-            )
-        if "lora" in args.model_type:
-            raise ValueError("Using EMA is not currently supported for LoRA training.")
+    # if args.use_ema:
+    #     if "lora" in args.model_type:
+    #         raise ValueError("Using EMA is not currently supported for LoRA training.")
     args.logging_dir = os.path.join(args.output_dir, args.logging_dir)
     args.accelerator_project_config = ProjectConfiguration(
         project_dir=args.output_dir, logging_dir=args.logging_dir
